@@ -157,17 +157,36 @@ function genUniqueID() {
         }
  }
 
- function sendSMS($mobile_no, $message)
-{
-    $user = 'gallery';
-    $password = 'c64af2841aXX';
-    $senderid = 'BKUDOC';
-    $url = 'http://t.instaclicksms.in/sendsms.jsp';
-    $message = urlencode($message);
-    $mobile_no = '91' . $mobile_no;
-    $smsInit = curl_init($url . "?user=$user&password=$password&mobiles=$mobile_no&sms=" . $message . "&senderid=" . $senderid);
-    curl_setopt($smsInit, CURLOPT_RETURNTRANSFER, true);
-    $res = curl_exec($smsInit);
+//  function sendSMS($mobile_no, $message)
+// {
+//     $user = 'gallery';
+//     $password = 'c64af2841aXX';
+//     $senderid = 'BKUDOC';
+//     $url = 'http://t.instaclicksms.in/sendsms.jsp';
+//     $message = urlencode($message);
+//     $mobile_no = '91' . $mobile_no;
+//     $smsInit = curl_init($url . "?user=$user&password=$password&mobiles=$mobile_no&sms=" . $message . "&senderid=" . $senderid);
+//     curl_setopt($smsInit, CURLOPT_RETURNTRANSFER, true);
+//     $res = curl_exec($smsInit);
+
+// }
+
+function sendSMS($mobilenumbers, $message) {
+
+$user = 'newuser';
+//$password = '41b826cb00XX';
+$password = 'f8832cb2f3XX';
+//$senderid = 'FARMER';
+$senderid = 'ACADMY';
+$url = 'http://t.instaclicksms.in/sendsms.jsp';
+
+$message .= "\n E-Sikitsha ";
+$message = urlencode($message);
+$m = '91' . $mobilenumbers;
+$mobileno = $m;
+$ch = curl_init($url . "?user=$user&password=$password&mobiles=$m&sms=" . $message . "&senderid=".$senderid);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$ch = curl_exec($ch);
 
 }
 
