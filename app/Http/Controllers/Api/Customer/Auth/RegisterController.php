@@ -71,7 +71,7 @@ class RegisterController extends Controller
 			return response()->json(['success'=>false,'error'=>$validator->errors()]);
 		}
 
-		$customer = Customer::select('id','name','phone','otp')->where([['phone',$request->phone],['otp_verified',0],['is_active',0]])->first();
+		$customer = Customer::select('id','name','email','phone','otp')->where([['phone',$request->phone],['otp_verified',0],['is_active',0]])->first();
 		if($customer){
 			if($request->otp == $customer->otp){
 				$credentials = $request->only('phone');
