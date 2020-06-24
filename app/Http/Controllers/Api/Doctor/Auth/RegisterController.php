@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use JWTFactory;
 use JWTAuth,JWTException;
 use Validator,DB;
-use App\Doctor;
+use App\Models\DoctorMaster;
 class RegisterController extends Controller
 {
     /**
@@ -17,7 +17,7 @@ class RegisterController extends Controller
      */
 
     public function __construct() {
-        $this->middleware('auth:api')->except('login','register','otp_verify','resend_otp');
+        $this->middleware('auth:doctor')->except('login','register','otp_verify','resend_otp');
         // $this->middleware("auth:api");
         // Log::useFiles(storage_path('app/info_log.txt'), 'info');
     }
@@ -25,7 +25,8 @@ class RegisterController extends Controller
 	{
 
 		$validator = Validator::make($request->all(), [
-			'name' => 'required',
+            'name' => 'required',
+            'department_id' => 'required',
 			'password'=> 'required|min:6|confirmed',
             'phone'=> 'required|numeric',
             'licence_no'=> 'required',
@@ -36,23 +37,24 @@ class RegisterController extends Controller
 		$otp = mt_rand(100000, 999999);
 		DB::beginTransaction();
 		try {
-			$doctorPhoneExist = Doctor::where([['phone',$request->phone],['otp_verified','!=',null],['is_active',1]])->first();
+			$doctorPhoneExist = DoctorMaster::where([['phone_no',$request->phone],['otp_verified','!=',null],['is_active',1]])->first();
 			if($doctorPhoneExist != null){
 				return response()->json(['success'=>false,'error'=>'Phone no already exists']);
 			}
 
-			Doctor::where([['email',$request->email],['otp_verified','!=',null],['is_active',0]])->orWhere([['phone',$request->phone],['otp_verified','=',null],['is_active',0]])->delete();
-				$doctor = Doctor::create([
+			DoctorMaster::where([['email',$request->email],['otp_verified','!=',null],['is_active',0]])->orWhere([['phone_no',$request->phone],['otp_verified','=',null],['is_active',0]])->delete();
+				$doctor = DoctorMaster::create([
 					'name' => $request->name,
-					'email' => $request->email,
+                    'email' => $request->email,
+                    'department_id' => $request->department_id,
 					'password' => bcrypt($request->password),
-                    'phone' => $request->phone,
+                    'phone_no' => $request->phone,
                     'licence_no'=> $request->licence_no,
 					'otp' => $otp
 				]);
 				DB::commit();
-				sendNewSMS($request->phone,"Your otp verification code is ".$otp);
-				return response()->json(['success'=>true,'msg'=>'Otp sent succesfully','doctor_details'=>$doctor]);
+				sendSMS($request->phone,"Your otp verification code is ".$otp);
+				return response()->json(['success'=>true,'msg'=>'Otp sent succesfully']);
 			}
 		catch (\Exception $e) {
 				DB::rollback();
@@ -74,17 +76,19 @@ class RegisterController extends Controller
 			return response()->json(['success'=>false,'error'=>$validator->errors()]);
 		}
 
-		$doctor = Doctor::where([['phone',$request->phone],['otp_verified',0],['is_active',0]])->first();
+		$doctor = DoctorMaster::where([['phone_no',$request->phone],['otp_verified',0],['is_active',0]])->first();
 		if($doctor){
 			if($request->otp == $doctor->otp){
-				$credentials = $request->only('phone');
+                $credentials = $request->only('phone_no');
+                DoctorMaster::where('phone_no',$request->phone)->update(['is_active'=>1,'otp_verified'=>1]);
 				$credentials['is_active'] = 1;
 				try {
-					//$user = Customer::first();
-        			$token = JWTAuth::fromUser($doctor);
-        			$dt = date('Y-m-d H:i:s');
-        			Doctor::where('phone',$request->phone)->update(['is_active'=>1,'otp_verified'=>1]);
-					return response()->json(['success' => true,'token'=>$token,'details'=>$doctor]);
+                    $dt = date('Y-m-d H:i:s');
+                    $token = auth('doctor')->login($doctor);
+                    $details['id'] = auth('doctor')->id();
+                    $details['name'] = auth('doctor')->user()->name;
+                    $details['phone'] = auth('doctor')->user()->phone_no;
+					return response()->json(['success' => true,'token'=>$token,'details'=>$details]);
 				} catch (JWTException $e) {
 				            // something went wrong whilst attempting to encode the token
 					return response()->json(['success' => false, 'error' => 'Failed to login, please try again.']);
@@ -109,11 +113,11 @@ class RegisterController extends Controller
 		if ($validator->fails()) {
 			return response()->json(['success'=>false,'error'=>$validator->errors()]);
 		}
-		if (Doctor::where([['phone', '=', $request->phone],['is_active',0],['otp_verified',0]])->exists()) {
+		if (DoctorMaster::where([['phone_no', '=', $request->phone],['is_active',0],['otp_verified',0]])->exists()) {
 				$otp = mt_rand(100000, 999999);
-				$update = Doctor::where([['phone',$request->phone],['is_active',0]])->update(['otp'=>$otp]);
+				$update = DoctorMaster::where([['phone_no',$request->phone],['is_active',0]])->update(['otp'=>$otp]);
 				if($update){
-					sendNewSMS($request->phone,"Your otp verification code is ".$otp);
+					sendSMS($request->phone,"Your otp verification code is ".$otp);
 					return response()->json(['success'=>true,'msg'=>'Otp sent successfully']);
 						}
 			

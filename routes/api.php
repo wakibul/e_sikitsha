@@ -21,10 +21,6 @@ Route::post('/customer/forgot-password', 'Api\Customer\ForgotPasswordController@
 Route::post('/customer/validate-otp', 'Api\Customer\ForgotPasswordController@validateOtp');
 Route::post('/customer/change-password', 'Api\Customer\ForgotPasswordController@changePassword');
 Route::post('/customer/forgot-resend-otp', 'Api\Customer\ForgotPasswordController@resendOtp');
-Route::post('/doctor/register', 'Api\Doctor\Auth\RegisterController@register');
-Route::post('/doctor/verify', 'Api\Doctor\Auth\RegisterController@otp_verify');
-Route::post('/doctor/resend-otp', 'Api\Doctor\Auth\RegisterController@resend_otp');
-Route::post('/doctor/login', 'Api\Doctor\Auth\LoginController@index');
 Route::middleware('auth:api')->group(function(){
     Route::get('/customer/master/departments', 'Api\Customer\Master\DepartmentController@index');
     Route::post('/customer/master/department-doctor', 'Api\Customer\Master\DepartmentController@departments');
@@ -45,3 +41,22 @@ Route::middleware('auth:api')->group(function(){
 });
 Route::get('/customer/up', 'Api\Customer\BookingController@updatePic');
 Route::get('/customer/version', 'Api\VersionController@index');
+
+
+Route::group(['prefix' => 'doctor'], function () {
+    Route::post('/register', 'Api\Doctor\Auth\RegisterController@register');
+    Route::post('/verify', 'Api\Doctor\Auth\RegisterController@otp_verify');
+    Route::post('/resend-otp', 'Api\Doctor\Auth\RegisterController@resend_otp');
+    Route::post('/login', 'Api\Doctor\Auth\LoginController@index');
+    Route::get('/departments', 'Api\Doctor\DepartmentController@index');
+    Route::middleware('auth:doctor')->group(function(){
+        Route::get('/is-verified', 'Api\Doctor\Auth\LoginController@isVerified');
+        Route::post('/update-general-profile', 'Api\Doctor\DoctorController@updateGeneralProfile');
+        Route::get('/get-region', 'Api\Doctor\DoctorController@getRegion');
+        Route::post('/add-schedule', 'Api\Doctor\DoctorController@addSchedule');
+        Route::get('/view-schedule', 'Api\Doctor\DoctorController@viewSchedule');
+        Route::get('/view-price-schedule', 'Api\Doctor\DoctorController@getPriceSchedule');
+        Route::post('/add-price', 'Api\Doctor\DoctorController@addPrice');
+        Route::get('/view-price', 'Api\Doctor\DoctorController@viewPrice');
+    });
+});

@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use JWTFactory;
 use JWTAuth,JWTException;
 use Validator,DB;
-use App\Doctor;
+use App\Models\DoctorMaster;
 
 class LoginController extends Controller
 {
@@ -16,6 +16,8 @@ class LoginController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+
     public function index(Request $request)
     {
         //
@@ -26,18 +28,19 @@ class LoginController extends Controller
 		if ($validator->fails()) {
 			return response()->json(['success'=>false,'error'=>$validator->errors()]);
 		}
-		$credentials = $request->only('phone', 'password');
+		$credentials = $request->only('password');
 		$credentials['is_active'] = 1;
+		$credentials['phone_no'] = $request->get("phone");
 		 try {
             // attempt to verify the credentials and create a token for the user
-            if (! $token = auth('api')->attempt($credentials)) {
+            if (! $token = auth('doctor')->attempt($credentials)) {
                 return response()->json(['success' => false, 'error' => 'Your username or password is incorrect']);
             }
         } catch (JWTException $e) {
             // something went wrong whilst attempting to encode the token
             return response()->json(['success' => false, 'error' => $e->getMessage()]);
         }
-        $doctor = Doctor::findOrFail(auth('api')->user()->id);
+        $doctor = DoctorMaster::findOrFail(auth('doctor')->user()->id);
         return response()->json(['success' => true, 'token' => $token,'doctor'=>$doctor]);
     }
 
@@ -46,9 +49,28 @@ class LoginController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function isVerified()
     {
         //
+        $success = false;
+        try {
+            $user = auth('doctor')->userOrFail();
+        } catch (\Tymon\JWTAuth\Exceptions\UserNotDefinedException $e) {
+            // do something
+            return response()->json(['success'=>false,'message'=>$e->getMessage()]);
+        }
+        
+        try {
+        if(auth('doctor')->user()->is_verified == 1){
+            $success = true;
+        }
+        return response()->json(['id'=>auth('doctor')->user()->id,'is_verified'=>auth('doctor')->user()->is_verified,'success'=>$success]);
+        }
+        catch (JWTException $e) {
+            // something went wrong whilst attempting to encode the token
+            return response()->json(['success' => false, 'msg' => $e->getMessage(),'message'=>'Something went wrong']);
+        }
+
     }
 
     /**
