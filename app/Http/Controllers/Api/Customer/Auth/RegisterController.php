@@ -49,7 +49,7 @@ class RegisterController extends Controller
 				]);
 				DB::commit();
 				sendSMS($request->phone,"Your otp verification code is ".$otp);
-				return response()->json(['success'=>true,'msg'=>'Otp sent succesfully','customer_details'=>$customer->phone]);
+				return response()->json(['success'=>true,'msg'=>'Otp sent succesfully','customer_details'=>$customer->phone,'otp'=>$otp]);
 			}
 		catch (\Exception $e) {
 				DB::rollback();
