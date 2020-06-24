@@ -54,12 +54,12 @@ class RegisterController extends Controller
 		catch (\Exception $e) {
 				DB::rollback();
 			    return response()->json($e->getMessage());
-			}		
+			}
 
     }
 
-    // OTP Verification 
-    
+    // OTP Verification
+
     public function otp_verify(Request $request)
 	{
 
@@ -81,7 +81,7 @@ class RegisterController extends Controller
         			$token = JWTAuth::fromUser($customer);
         			$dt = date('Y-m-d H:i:s');
         			Customer::where('phone',$request->phone)->update(['is_active'=>1,'otp_verified'=>1]);
-					return response()->json(['success' => true,'token'=>$token,'details'=>$customer]);
+					return response()->json(['success' => true,'token'=>$token,'details'=>$customer,'message'=>'Successfully Login']);
 				} catch (JWTException $e) {
 				            // something went wrong whilst attempting to encode the token
 					return response()->json(['success' => false, 'error' => 'Failed to login, please try again.']);
@@ -95,9 +95,9 @@ class RegisterController extends Controller
 		else{
 			return response()->json(["success"=>false,"msg"=>"Invalid User"]);
 		}
-        
+
     }
-    
+
     public function resend_otp(Request $request)
 	{
 		$validator = Validator::make($request->all(), [
@@ -113,14 +113,14 @@ class RegisterController extends Controller
 					sendSMS($request->phone,"Your otp verification code is ".$otp);
 					return response()->json(['success'=>true,'msg'=>'Otp sent successfully']);
 						}
-			
+
 			}
 			else{
 				return response()->json(['success'=>false,'error'=>'The phone no does not exist']);
 			}
-		
+
     }
-    
+
 
     public function index()
     {
